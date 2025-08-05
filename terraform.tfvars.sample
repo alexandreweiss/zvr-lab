@@ -1,0 +1,7 @@
+# Sample Terraform variables file
+# Copy this file to terraform.tfvars and update with your actual values
+
+aviatrix_controller_ip = "controller.example.com"
+aviatrix_username      = "admin"
+aviatrix_password      = "your-password-here"
+aviatrix_azure_account_name = "your-azure-account-name"
