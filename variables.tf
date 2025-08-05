@@ -17,5 +17,4 @@ variable "aviatrix_password" {
 variable "aviatrix_azure_account_name" {
   description = "Name of the Aviatrix Azure account"
   type        = string
-  default     = "azure-alweiss"
 }
