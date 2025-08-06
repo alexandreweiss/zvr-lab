@@ -3,7 +3,8 @@ All artifacts for zvr lab
 
 ## Current blocker
 If source and destination Smart Groups match the same spoke (which is the case), policy is not applied.
-Fallback to CIDR based SG is needed in that case
+- Fallback to CIDR based SG is needed in that case.
+- Dis. Pol. pruning
 
 ## Overview
 This Terraform configuration deploys a hub-and-spoke network topology in Azure with Aviatrix gateways for secure connectivity and traffic inspection.
