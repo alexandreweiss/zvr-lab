@@ -25,3 +25,23 @@ output "spoke1_vnet_address_space" {
 output "spoke2_vnet_address_space" {
   value = azurerm_virtual_network.spoke2.address_space
 }
+
+output "spoke1_vm_private_ip" {
+  description = "Private IP of vm-spoke1-linux"
+  value       = azurerm_network_interface.spoke1_vm_nic.private_ip_address
+}
+
+output "spoke2_vm_private_ip" {
+  description = "Private IP of vm-spoke2-linux"
+  value       = azurerm_network_interface.spoke2_vm_nic.private_ip_address
+}
+
+output "ilb_frontend_ip" {
+  description = "Internal Load Balancer frontend IP (next-hop for UDRs)"
+  value       = azurerm_lb.hub_internal.frontend_ip_configuration[0].private_ip_address
+}
+
+output "vpn_gateway_name" {
+  description = "Aviatrix VPN gateway name (download .ovpn from Controller)"
+  value       = aviatrix_gateway.vpn_gateway.gw_name
+}

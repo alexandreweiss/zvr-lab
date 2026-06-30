@@ -1,73 +1,206 @@
-# zvr-lab
-All artifacts for zvr lab
+# ZVR Lab
 
-## Current blocker
-If source and destination Smart Groups match the same spoke (which is the case), policy is not applied.
-- Fallback to CIDR based SG is needed in that case.
-- Dis. Pol. pruning
+Hub-and-spoke Azure lab demonstrating the **Zero-trust Virtual Router** (ZVR) pattern with Aviatrix. An Aviatrix spoke gateway deployed inside the hub VNet acts as a centralized virtual router, intercepting all east-west spoke traffic for inspection and DCF policy enforcement — without a traditional transit gateway or NVA.
 
-## Overview
-This Terraform configuration deploys a hub-and-spoke network topology in Azure with Aviatrix gateways for secure connectivity and traffic inspection.
+---
 
 ## Architecture
 
-### Azure Infrastructure
-- **Resource Group**: `zvr-frc-zvr` (France Central)
-- **Hub VNet**: `vnet-hub-frc` (10.0.0.0/16)
-  - GatewaySubnet: 10.0.1.0/24
-  - subnet-shared: 10.0.2.0/24
-  - avx-gw: 10.0.3.0/24 (Aviatrix Gateway subnet)
-  - avx-ha-gw: 10.0.4.0/24 (Aviatrix HA Gateway subnet)
-  - avx-vpn-gw: 10.0.5.0/24 (Aviatrix VPN Gateway subnet)
-- **Spoke VNets**:
-  - `vnet-spoke1-frc` (10.1.0.0/16) with subnet-workload: 10.1.1.0/24
-  - `vnet-spoke2-frc` (10.2.0.0/16) with subnet-workload: 10.2.1.0/24
+```
+  VPN Users (192.168.43.0/24)
+       │ split tunnel: 10.1/16, 10.2/16
+  [avx-vpn-hub-frc]  10.0.5.0/24
+       │
+  ┌────┴──────────────────────────────────────────┐
+  │               Hub VNet  10.0.0.0/16           │
+  │                                               │
+  │  subnet-shared  10.0.2.0/24                   │
+  │  ┌─────────────────────────────────────────┐  │
+  │  │  Internal Load Balancer (HA Ports SKU)  │  │
+  │  │         frontend IP (dynamic)           │  │
+  │  └──────────────┬──────────────────────────┘  │
+  │           ┌─────┴──────┐                      │
+  │     NIC assoc.     NIC assoc.                 │
+  │           │             │                     │
+  │  [avx-spoke-hub-frc]  [avx-spoke-hub-frc-hagw]│
+  │   active GW             standby GW            │
+  │   10.0.3.0/24           10.0.4.0/24           │
+  │   single_ip_snat=true                         │
+  └────┬────────────────────────────┬─────────────┘
+       │  VNet Peering              │  VNet Peering
+       │  (allow_gateway_transit)   │  (allow_gateway_transit)
+  ┌────┴────────────┐     ┌─────────┴──────────┐
+  │  Spoke 1 VNet   │     │   Spoke 2 VNet      │
+  │  10.1.0.0/16    │     │   10.2.0.0/16       │
+  │                 │     │                     │
+  │  subnet-workload│     │   subnet-workload   │
+  │  10.1.1.0/24    │     │   10.2.1.0/24       │
+  │  UDR:0.0.0.0/0  │     │   UDR:0.0.0.0/0     │
+  │  → ILB frontend │     │   → ILB frontend    │
+  │                 │     │                     │
+  │  vm-spoke1-linux│     │   vm-spoke2-linux   │
+  │  (Ubuntu 22.04) │     │   (Ubuntu 22.04)    │
+  └─────────────────┘     └─────────────────────┘
 
-### Network Components
-- **VNet Peering**: Bidirectional peering between hub and each spoke
-- **Internal Load Balancer**: `lb-hub-internal` with HA Ports configuration
-- **Route Tables**: 
-  - Spokes route 0.0.0.0/0 traffic to load balancer
-  - Hub shared subnet has internet blackhole route
-  - BGP route propagation disabled
+  East-west path: vm-spoke1 ──UDR──► ILB ──► Aviatrix GW ──SNAT──► vm-spoke2
+  Return path:    vm-spoke2 ──UDR──► ILB ──► Aviatrix GW ──► vm-spoke1
+```
 
-### Aviatrix Components
-- **Spoke Gateway**: `avx-spoke-hub-frc` deployed in hub VNet
-  - High Availability enabled
-  - Single IP SNAT enabled
-  - Advertises spoke VNet CIDRs (10.1.0.0/16, 10.2.0.0/16)
-- **VPN Gateway**: `avx-vpn-hub-frc` for remote user access
-  - VPN CIDR: 192.168.43.0/24
-  - Split tunnel enabled for spoke networks
-  - Maximum 100 concurrent connections
-- **VPN User**: `zvr-user` (aweiss@aviatrix.com)
+**East-west flow (Spoke 1 → Spoke 2):**
 
-### Virtual Machines
-- **Spoke 1 VM**: `vm-spoke1-linux` (Ubuntu 22.04 LTS)
-- **Spoke 2 VM**: `vm-spoke2-linux` (Ubuntu 22.04 LTS)
-- **Authentication**: SSH key-based using existing `ssh-linux-non-prod` key from `core-rg`
-- **Admin User**: `admin-lab`
+1. `vm-spoke1` sends to `10.2.1.x` → UDR on `subnet-workload` sends to ILB frontend IP
+2. ILB forwards to active Aviatrix gateway
+3. Gateway applies DCF policy, SNATs source to gateway IP, forwards to `10.2.1.x`
+4. Return path: `vm-spoke2` → UDR → ILB → Aviatrix GW → `vm-spoke1`
 
-## Files Structure
-- `main.tf` - Core Azure infrastructure (VNets, subnets, load balancer, VMs)
-- `aviatrix.tf` - Aviatrix gateways and VPN configuration
-- `vms.tf` - Virtual machine resources
-- `versions.tf` - Terraform and provider configurations
-- `variables.tf` - Variable definitions
-- `terraform.tfvars` - Variable values (Aviatrix controller settings)
+SNAT eliminates asymmetric routing on the return path.
 
-## Traffic Flow
-1. Spoke VM traffic (0.0.0.0/0) routes to internal load balancer
-2. Load balancer distributes traffic to Aviatrix gateways (active/standby)
-3. Aviatrix gateways provide SNAT and security inspection
-4. VPN users can access spoke networks through split tunneling
+### Network layout
 
-## Deployment
-1. Configure Terraform Cloud workspace: `ananableu/zvr-lab`
-2. Set Aviatrix controller credentials in `terraform.tfvars`
-3. Run `terraform init && terraform apply`
+| Resource | Name | CIDR |
+|---|---|---|
+| Hub VNet | vnet-hub-frc | 10.0.0.0/16 |
+| Hub: GatewaySubnet | — | 10.0.1.0/24 |
+| Hub: shared (ILB frontend) | subnet-shared | 10.0.2.0/24 |
+| Hub: Aviatrix GW | avx-gw | 10.0.3.0/24 |
+| Hub: Aviatrix HA GW | avx-ha-gw | 10.0.4.0/24 |
+| Hub: VPN GW | avx-vpn-gw | 10.0.5.0/24 |
+| Spoke 1 VNet | vnet-spoke1-frc | 10.1.0.0/16 |
+| Spoke 1: workload | subnet-workload | 10.1.1.0/24 |
+| Spoke 2 VNet | vnet-spoke2-frc | 10.2.0.0/16 |
+| Spoke 2: workload | subnet-workload | 10.2.1.0/24 |
+| VPN pool | — | 192.168.43.0/24 |
 
-## Dependencies
-- Existing SSH public key: `ssh-linux-non-prod` in `core-rg` resource group
-- Aviatrix Controller: `controller-prd.ananableu.fr`
-- Azure account configured in Aviatrix Controller
+---
+
+## Prerequisites
+
+### 1. Azure
+
+- Subscription with Contributor or Owner
+- SSH public key named **`ssh-linux-non-prod`** in resource group **`core-rg`** (same subscription). VMs use this for auth.
+
+  If it doesn't exist:
+  ```bash
+  az sshkey create --name ssh-linux-non-prod --resource-group core-rg --location "France Central"
+  ```
+
+### 2. Aviatrix Controller
+
+- Controller `controller-prd.ananableu.fr` reachable
+- Azure account **`azure-alweiss`** already onboarded (subscription `cc67e95e`)
+- Admin credentials available
+
+### 3. Terraform
+
+- Terraform ≥ 1.5
+- **Terraform Cloud** — access to org `ananableu`, workspace `zvr-lab`
+  OR comment out the `cloud {}` block in `versions.tf` and configure a local/remote backend
+
+### 4. Lab access
+
+- [Aviatrix VPN Client](https://docs.aviatrix.com/documentation/latest/official-release/release-notes.html) installed — needed to reach VMs (no public IPs)
+
+---
+
+## Deploy
+
+### 1. Configure variables
+
+```bash
+cp terraform.tfvars.sample terraform.tfvars
+```
+
+Edit `terraform.tfvars`:
+
+```hcl
+aviatrix_controller_ip      = "controller-prd.ananableu.fr"
+aviatrix_username           = "admin"
+aviatrix_password           = "..."
+aviatrix_azure_account_name = "azure-alweiss"
+```
+
+> **Terraform Cloud:** set these as workspace variables instead. Mark `aviatrix_password` as sensitive.
+
+### 2. Apply
+
+```bash
+terraform init
+terraform plan
+terraform apply
+```
+
+Apply takes **15–20 minutes**; Aviatrix gateway provisioning dominates.
+
+---
+
+## Test: spoke-to-spoke traffic
+
+### Step 1 — Get VM IPs
+
+```bash
+terraform output spoke1_vm_private_ip
+terraform output spoke2_vm_private_ip
+```
+
+Or: Azure Portal → Resource group `zvr-frc-zvr` → NICs `nic-vm-spoke1` / `nic-vm-spoke2`.
+
+### Step 2 — Connect to VPN
+
+1. Aviatrix Controller → **VPN → VPN Users** → `zvr-user` → **Download config**
+2. Import the `.ovpn` profile into Aviatrix VPN Client and connect
+3. Your assigned IP will be in `192.168.43.0/24`
+
+### Step 3 — SSH to Spoke 1 VM
+
+```bash
+ssh -i ~/.ssh/ssh-linux-non-prod admin-lab@<spoke1_vm_private_ip>
+```
+
+### Step 4 — Test connectivity to Spoke 2
+
+From `vm-spoke1`:
+
+```bash
+# ICMP
+ping <spoke2_vm_private_ip>
+
+# TCP port check
+nc -zv <spoke2_vm_private_ip> 22
+
+# Bidirectional data transfer (open a second SSH session to vm-spoke2)
+# On vm-spoke2:  nc -lvp 9000
+# On vm-spoke1:  echo "hello from spoke1" | nc <spoke2_vm_private_ip> 9000
+```
+
+### Expected results
+
+| Test | Result |
+|---|---|
+| Spoke 1 → Spoke 2 ping | Success — traffic routes through Aviatrix GW |
+| Spoke 2 → Spoke 1 ping | Success |
+| Direct spoke1↔spoke2 without UDR | Fail — no peering between spokes |
+
+### Verify traffic passes through gateway
+
+Aviatrix Controller → **Monitor → Gateway** → select `avx-spoke-hub-frc` → check active session table or byte counters during test.
+
+---
+
+## Known behaviors
+
+**`attached = false`** — The spoke gateway is standalone, not connected to a transit. This is intentional: the lab uses the gateway as a pure virtual router. Attach to a transit gateway to extend to multi-cloud.
+
+**DCF policy pruning** — If source and destination Smart Groups both resolve to the same spoke VNet (same Aviatrix tag), Aviatrix prunes the policy as a no-op. Use CIDR-based Smart Groups (e.g., `10.1.0.0/16` for Spoke 1, `10.2.0.0/16` for Spoke 2) for east-west rules in this topology.
+
+**SNAT and return path** — `single_ip_snat = true` is load-bearing. Disabling it breaks return traffic for spoke-to-spoke flows because the UDR on the destination spoke also redirects to the ILB.
+
+---
+
+## Cleanup
+
+```bash
+terraform destroy
+```
+
+If destroy fails on NIC/LB association resources, Azure is still releasing the ILB. Re-run `terraform destroy`.
