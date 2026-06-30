@@ -18,3 +18,14 @@ variable "aviatrix_azure_account_name" {
   description = "Name of the Aviatrix Azure account"
   type        = string
 }
+
+variable "dcf_scenario" {
+  description = "DCF enforcement scenario: 'allow_all' (baseline), 'deny_icmp' (block ping only), 'deny_all' (full block)"
+  type        = string
+  default     = "allow_all"
+
+  validation {
+    condition     = contains(["allow_all", "deny_icmp", "deny_all"], var.dcf_scenario)
+    error_message = "dcf_scenario must be one of: allow_all, deny_icmp, deny_all."
+  }
+}

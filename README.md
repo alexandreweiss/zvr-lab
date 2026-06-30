@@ -187,6 +187,64 @@ Aviatrix Controller → **Monitor → Gateway** → select `avx-spoke-hub-frc` �
 
 ---
 
+## Test: DCF policy enforcement
+
+Smart Groups `sg-spoke1-vms` and `sg-spoke2-vms` are tag-based (`application=app1` / `application=app2`). Toggle `dcf_scenario` in `terraform.tfvars` and re-apply to switch enforcement mode — no code changes needed.
+
+| `dcf_scenario` | Effect |
+|---|---|
+| `allow_all` (default) | Baseline permit — all spoke1 ↔ spoke2 traffic flows |
+| `deny_icmp` | ICMP blocked, TCP/UDP still flows (ping fails, SSH works) |
+| `deny_all` | All spoke1 ↔ spoke2 traffic blocked |
+
+### Demo sequence
+
+**Step 1 — Baseline (allow_all)**
+
+```bash
+# terraform.tfvars: dcf_scenario = "allow_all"
+terraform apply
+
+# From vm-spoke1:
+ping <spoke2_vm_private_ip>          # success
+nc -zv <spoke2_vm_private_ip> 22     # success
+```
+
+**Step 2 — Selective enforcement (deny_icmp)**
+
+```bash
+# terraform.tfvars: dcf_scenario = "deny_icmp"
+terraform apply   # ~seconds, policy push only
+
+# From vm-spoke1:
+ping <spoke2_vm_private_ip>          # fails — ICMP blocked
+nc -zv <spoke2_vm_private_ip> 22     # success — TCP still allowed
+```
+
+**Step 3 — Full block (deny_all)**
+
+```bash
+# terraform.tfvars: dcf_scenario = "deny_all"
+terraform apply
+
+# From vm-spoke1:
+ping <spoke2_vm_private_ip>          # fails
+nc -zv <spoke2_vm_private_ip> 22     # fails
+```
+
+**Step 4 — Restore**
+
+```bash
+# terraform.tfvars: dcf_scenario = "allow_all"
+terraform apply
+```
+
+### Observe in CoPilot
+
+CoPilot → **Security → Distributed Cloud Firewall** → Policy Logs — shows hits with action PERMIT/DENY per rule, with source/destination Smart Group names.
+
+---
+
 ## Known behaviors
 
 **`attached = false`** — The spoke gateway is standalone, not connected to a transit. This is intentional: the lab uses the gateway as a pure virtual router. Attach to a transit gateway to extend to multi-cloud.
