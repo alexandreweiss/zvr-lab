@@ -25,7 +25,7 @@ Hub-and-spoke Azure lab built for the ZVR customer engagement. An Aviatrix spoke
   │  [avx-spoke-hub-frc]  [avx-spoke-hub-frc-hagw]│
   │   active GW             standby GW            │
   │   10.0.3.0/24           10.0.4.0/24           │
-  │   single_ip_snat=true                         │
+  │                                               │
   └────┬────────────────────────────┬─────────────┘
        │  VNet Peering              │  VNet Peering
        │  (allow_gateway_transit)   │  (allow_gateway_transit)
@@ -42,18 +42,18 @@ Hub-and-spoke Azure lab built for the ZVR customer engagement. An Aviatrix spoke
   │  (Ubuntu 22.04) │     │   (Ubuntu 22.04)    │
   └─────────────────┘     └─────────────────────┘
 
-  East-west path: vm-spoke1 ──UDR──► ILB ──► Aviatrix GW ──SNAT──► vm-spoke2
+  East-west path: vm-spoke1 ──UDR──► ILB ──► Aviatrix GW ──► vm-spoke2
   Return path:    vm-spoke2 ──UDR──► ILB ──► Aviatrix GW ──► vm-spoke1
 ```
 
 **East-west flow (Spoke 1 → Spoke 2):**
 
 1. `vm-spoke1` sends to `10.2.1.x` → UDR on `subnet-workload` sends to ILB frontend IP
-2. ILB forwards to active Aviatrix gateway
-3. Gateway applies DCF policy, SNATs source to gateway IP, forwards to `10.2.1.x`
-4. Return path: `vm-spoke2` → UDR → ILB → Aviatrix GW → `vm-spoke1`
+2. ILB forwards to active Aviatrix gateway (5-tuple hash — same GW for both directions)
+3. Gateway applies DCF policy and forwards to `10.2.1.x`
+4. Return path: `vm-spoke2` → UDR → ILB → same Aviatrix GW → `vm-spoke1`
 
-SNAT eliminates asymmetric routing on the return path.
+Symmetric routing is guaranteed by the ILB 5-tuple hash — both directions of a flow land on the same gateway. SNAT is not required.
 
 ### Network layout
 
@@ -193,7 +193,7 @@ Aviatrix Controller → **Monitor → Gateway** → select `avx-spoke-hub-frc` �
 
 **DCF policy pruning** — If source and destination Smart Groups both resolve to the same spoke VNet (same Aviatrix tag), Aviatrix prunes the policy as a no-op. Use CIDR-based Smart Groups (e.g., `10.1.0.0/16` for Spoke 1, `10.2.0.0/16` for Spoke 2) for east-west rules in this topology.
 
-**SNAT and return path** — `single_ip_snat = true` is load-bearing. Disabling it breaks return traffic for spoke-to-spoke flows because the UDR on the destination spoke also redirects to the ILB.
+**Symmetric routing** — Azure ILB uses a 5-tuple hash (src IP, dst IP, src port, dst port, protocol), so both directions of a flow always land on the same Aviatrix gateway. SNAT is not needed for spoke-to-spoke symmetry in this topology.
 
 ---
 

@@ -20,7 +20,7 @@ No Aviatrix transit gateway. East-west spoke traffic is steered via UDRs → ILB
 
 **ILB + UDR as traffic steering** — Spoke route tables send 0.0.0.0/0 to the ILB frontend IP. ILB is HA-ports SKU, distributes to active/standby Aviatrix gateway NICs. Hub shared subnet has a `0.0.0.0/0 → None` blackhole to prevent hub-native internet breakout.
 
-**`single_ip_snat = true` is required** — Disabling it breaks return traffic on spoke-to-spoke flows. SNAT makes return traffic symmetric through the gateway.
+**`single_ip_snat = true` is optional for symmetry** — Azure ILB 5-tuple hash guarantees both directions of a flow hit the same gateway. SNAT is not required to fix asymmetric routing in this topology.
 
 **`attached = false`** — Gateway is standalone. It advertises spoke CIDRs (`10.1.0.0/16, 10.2.0.0/16`) via `included_advertised_spoke_routes` for future transit attachment.
 
