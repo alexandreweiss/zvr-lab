@@ -3,10 +3,6 @@ locals {
   add_all_deny  = var.dcf_scenario == "deny_all"
 }
 
-resource "aviatrix_distributed_firewalling_config" "main" {
-  enable_distributed_firewalling = true
-}
-
 # Tag-based Smart Groups — matches VMs by Azure tag set in vms.tf
 resource "aviatrix_smart_group" "spoke1_vms" {
   name = "sg-spoke1-vms"
@@ -33,7 +29,6 @@ resource "aviatrix_smart_group" "spoke2_vms" {
 }
 
 resource "aviatrix_distributed_firewalling_policy_list" "demo" {
-  depends_on = [aviatrix_distributed_firewalling_config.main]
 
   # Scenario: deny_icmp — blocks ping, allows everything else
   dynamic "policies" {

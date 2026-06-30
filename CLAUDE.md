@@ -41,6 +41,10 @@ No Aviatrix transit gateway. East-west spoke traffic is steered via UDRs → ILB
 - Aviatrix Azure account onboarded in controller — account name passed via `var.aviatrix_azure_account_name`
 - No dependency on any pre-existing resource group or SSH key
 
+## Shared controller constraints
+
+DCF must be enabled manually on the controller before applying `dcf.tf` — this is a shared controller (9.0), Terraform must NOT touch global feature flags. `aviatrix_config_feature` and `aviatrix_distributed_firewalling_config` are both excluded intentionally.
+
 ## Common issues
 
 **NIC data source fails** — `avx_gw_nic` name is `av-nic-<gw_name>`. If gateway name changes, this auto-updates. Data source has `depends_on = [module.mc_spoke_hub]`.
