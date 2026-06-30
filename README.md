@@ -249,7 +249,14 @@ CoPilot → **Security → Distributed Cloud Firewall** → Policy Logs — show
 
 **`attached = false`** — The spoke gateway is standalone, not connected to a transit. This is intentional: the lab uses the gateway as a pure virtual router. Attach to a transit gateway to extend to multi-cloud.
 
-**DCF policy pruning** — If source and destination Smart Groups both resolve to the same spoke VNet (same Aviatrix tag), Aviatrix prunes the policy as a no-op. Use CIDR-based Smart Groups (e.g., `10.1.0.0/16` for Spoke 1, `10.2.0.0/16` for Spoke 2) for east-west rules in this topology.
+**DCF policy pruning** — If source and destination Smart Groups both resolve to the same gateway (both spokes share one GW in this topology), Aviatrix prunes the policy as a no-op. Policies appear in the controller but are silently dropped before being pushed to the gateway.
+
+To disable pruning, set this env var on the controller before applying DCF rules:
+
+```
+Container: avx-ctrl-state-sync
+Env var:   AVX_CTRL_MICROSEG_DISABLE_POLICY_PRUNING=true
+```
 
 **Symmetric routing** — Azure ILB uses a 5-tuple hash (src IP, dst IP, src port, dst port, protocol), so both directions of a flow always land on the same Aviatrix gateway. SNAT is not needed for spoke-to-spoke symmetry in this topology.
 
