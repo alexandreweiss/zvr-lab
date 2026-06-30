@@ -2,7 +2,7 @@
 
 ## What this deploys
 
-Azure hub-and-spoke with an Aviatrix spoke gateway in the hub acting as a virtual router (ZVR pattern).
+Azure hub-and-spoke built for ZVR customer engagement. Aviatrix spoke gateway in hub acts as virtual router.
 No Aviatrix transit gateway. East-west spoke traffic is steered via UDRs → ILB → Aviatrix GW.
 
 ## File map

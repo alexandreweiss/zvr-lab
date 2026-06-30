@@ -1,6 +1,6 @@
 # ZVR Lab
 
-Hub-and-spoke Azure lab demonstrating the **Zero-trust Virtual Router** (ZVR) pattern with Aviatrix. An Aviatrix spoke gateway deployed inside the hub VNet acts as a centralized virtual router, intercepting all east-west spoke traffic for inspection and DCF policy enforcement — without a traditional transit gateway or NVA.
+Hub-and-spoke Azure lab built for the ZVR customer engagement. An Aviatrix spoke gateway deployed inside the hub VNet acts as a centralized virtual router, intercepting all east-west spoke traffic for inspection and DCF policy enforcement — without a traditional transit gateway or NVA.
 
 ---
 
