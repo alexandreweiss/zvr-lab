@@ -47,6 +47,12 @@ resource "azurerm_linux_virtual_machine" "spoke1_vm" {
     version   = "latest"
   }
 
+  # Gatus monitors spoke2 from spoke1
+  custom_data = base64encode(templatefile("${path.module}/cloud-init/gatus.yaml.tpl", {
+    target_ip   = azurerm_network_interface.spoke2_vm_nic.private_ip_address
+    target_name = "spoke2"
+  }))
+
   tags = {
     application = "app1"
   }
@@ -94,6 +100,12 @@ resource "azurerm_linux_virtual_machine" "spoke2_vm" {
     sku       = "22_04-lts-gen2"
     version   = "latest"
   }
+
+  # Gatus monitors spoke1 from spoke2
+  custom_data = base64encode(templatefile("${path.module}/cloud-init/gatus.yaml.tpl", {
+    target_ip   = azurerm_network_interface.spoke1_vm_nic.private_ip_address
+    target_name = "spoke1"
+  }))
 
   tags = {
     application = "app2"

@@ -45,3 +45,13 @@ output "vpn_gateway_name" {
   description = "Aviatrix VPN gateway name (download .ovpn from Controller)"
   value       = aviatrix_gateway.vpn_gateway.gw_name
 }
+
+output "gatus_spoke1_dashboard" {
+  description = "Gatus dashboard on spoke1 VM (monitors spoke2) — requires VPN"
+  value       = "http://${azurerm_network_interface.spoke1_vm_nic.private_ip_address}:8080"
+}
+
+output "gatus_spoke2_dashboard" {
+  description = "Gatus dashboard on spoke2 VM (monitors spoke1) — requires VPN"
+  value       = "http://${azurerm_network_interface.spoke2_vm_nic.private_ip_address}:8080"
+}

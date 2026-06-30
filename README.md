@@ -191,6 +191,15 @@ Aviatrix Controller → **Monitor → Gateway** → select `avx-spoke-hub-frc` �
 
 Smart Groups `sg-spoke1-vms` and `sg-spoke2-vms` are tag-based (`application=app1` / `application=app2`). Toggle `dcf_scenario` in `terraform.tfvars` and re-apply to switch enforcement mode — no code changes needed.
 
+Each VM runs a **Gatus** monitoring dashboard (installed via cloud-init at boot) that continuously probes the other spoke for ICMP, TCP 22, and TCP 9000. Open both dashboards before running the demo — status flips within 5 seconds of a policy push.
+
+```bash
+terraform output gatus_spoke1_dashboard   # http://<spoke1-ip>:8080 — monitors spoke2
+terraform output gatus_spoke2_dashboard   # http://<spoke2-ip>:8080 — monitors spoke1
+```
+
+> Dashboards require VPN. Allow ~2 minutes after first boot for Docker + Gatus to start.
+
 | `dcf_scenario` | Effect |
 |---|---|
 | `allow_all` (default) | Baseline permit — all spoke1 ↔ spoke2 traffic flows |
