@@ -30,14 +30,16 @@ No Aviatrix transit gateway. East-west spoke traffic is steered via UDRs → ILB
 
 ## Provider constraints
 
-- `azurerm ~>3.0` (not 4.x — data source `azurerm_ssh_public_key` syntax differs)
-- `aviatrix` — version pinned by Terraform Cloud. Controller is 8.2, use mc-spoke ≤8.2.x
-- Backend: Terraform Cloud org `ananableu`, workspace `zvr-lab`
+- `azurerm ~>3.0`
+- `tls ~>4.0` — generates RSA-4096 SSH key pair; private key written to `ssh_key.pem` (gitignored)
+- `local ~>2.0` — writes `ssh_key.pem` with `0600` permissions
+- `aviatrix` — no version pin. Controller is 8.2, use mc-spoke ≤8.2.x
+- Backend: **local** — `terraform.tfstate` in working directory
 
 ## Azure dependencies (must exist before apply)
 
-- SSH public key `ssh-linux-non-prod` in resource group `core-rg` — both VMs use it
-- Aviatrix Azure account `azure-alweiss` onboarded in controller (subscription `cc67e95e`)
+- Aviatrix Azure account onboarded in controller — account name passed via `var.aviatrix_azure_account_name`
+- No dependency on any pre-existing resource group or SSH key
 
 ## Common issues
 

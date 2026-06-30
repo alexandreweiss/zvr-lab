@@ -46,6 +46,11 @@ output "vpn_gateway_name" {
   value       = aviatrix_gateway.vpn_gateway.gw_name
 }
 
+output "ssh_private_key_path" {
+  description = "Path to generated SSH private key — use to connect to VMs"
+  value       = local_sensitive_file.ssh_private_key.filename
+}
+
 output "gatus_spoke1_dashboard" {
   description = "Gatus dashboard on spoke1 VM (monitors spoke2) — requires VPN"
   value       = "http://${azurerm_network_interface.spoke1_vm_nic.private_ip_address}:8080"

@@ -1,20 +1,19 @@
 terraform {
-  cloud {
-    organization = "ananableu"
-    
-    workspaces {
-      name = "zvr-lab"
-    }
-  }
-  
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
       version = "~>3.0"
     }
     aviatrix = {
-      source  = "AviatrixSystems/aviatrix"
-    #   version = "~>3.1"
+      source = "AviatrixSystems/aviatrix"
+    }
+    tls = {
+      source  = "hashicorp/tls"
+      version = "~>4.0"
+    }
+    local = {
+      source  = "hashicorp/local"
+      version = "~>2.0"
     }
   }
 }

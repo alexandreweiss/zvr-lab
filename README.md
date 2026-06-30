@@ -78,24 +78,18 @@ Symmetric routing is guaranteed by the ILB 5-tuple hash — both directions of a
 ### 1. Azure
 
 - Subscription with Contributor or Owner
-- SSH public key named **`ssh-linux-non-prod`** in resource group **`core-rg`** (same subscription). VMs use this for auth.
-
-  If it doesn't exist:
-  ```bash
-  az sshkey create --name ssh-linux-non-prod --resource-group core-rg --location "France Central"
-  ```
+- Azure CLI authenticated (`az login`) or service principal configured
 
 ### 2. Aviatrix Controller
 
-- Controller `controller-prd.ananableu.fr` reachable
-- Azure account **`azure-alweiss`** already onboarded (subscription `cc67e95e`)
+- Controller FQDN/IP reachable from where Terraform runs
+- Azure account already onboarded in the controller
 - Admin credentials available
 
 ### 3. Terraform
 
 - Terraform ≥ 1.5
-- **Terraform Cloud** — access to org `ananableu`, workspace `zvr-lab`
-  OR comment out the `cloud {}` block in `versions.tf` and configure a local/remote backend
+- State is **local** — `terraform.tfstate` is written to the working directory. Back it up if needed.
 
 ### 4. Lab access
 
@@ -154,7 +148,7 @@ Or: Azure Portal → Resource group `zvr-frc-zvr` → NICs `nic-vm-spoke1` / `ni
 ### Step 3 — SSH to Spoke 1 VM
 
 ```bash
-ssh -i ~/.ssh/ssh-linux-non-prod admin-lab@<spoke1_vm_private_ip>
+ssh -i $(terraform output -raw ssh_private_key_path) admin-lab@<spoke1_vm_private_ip>
 ```
 
 ### Step 4 — Test connectivity to Spoke 2

@@ -1,10 +1,16 @@
-# Data source for existing SSH key
-data "azurerm_ssh_public_key" "linux_key" {
-  name                = "ssh-linux-non-prod"
-  resource_group_name = "core-rg"
+# Generate SSH key pair for this deployment
+resource "tls_private_key" "ssh" {
+  algorithm = "RSA"
+  rsa_bits  = 4096
 }
 
-# Spoke 1 VM Resources
+resource "local_sensitive_file" "ssh_private_key" {
+  content         = tls_private_key.ssh.private_key_openssh
+  filename        = "${path.module}/ssh_key.pem"
+  file_permission = "0600"
+}
+
+# Spoke 1 VM
 resource "azurerm_network_interface" "spoke1_vm_nic" {
   name                = "nic-vm-spoke1"
   location            = azurerm_resource_group.main.location
@@ -32,7 +38,7 @@ resource "azurerm_linux_virtual_machine" "spoke1_vm" {
 
   admin_ssh_key {
     username   = "admin-lab"
-    public_key = data.azurerm_ssh_public_key.linux_key.public_key
+    public_key = tls_private_key.ssh.public_key_openssh
   }
 
   os_disk {
@@ -47,7 +53,6 @@ resource "azurerm_linux_virtual_machine" "spoke1_vm" {
     version   = "latest"
   }
 
-  # Gatus monitors spoke2 from spoke1
   custom_data = base64encode(templatefile("${path.module}/cloud-init/gatus.yaml.tpl", {
     target_ip   = azurerm_network_interface.spoke2_vm_nic.private_ip_address
     target_name = "spoke2"
@@ -58,7 +63,7 @@ resource "azurerm_linux_virtual_machine" "spoke1_vm" {
   }
 }
 
-# Spoke 2 VM Resources
+# Spoke 2 VM
 resource "azurerm_network_interface" "spoke2_vm_nic" {
   name                = "nic-vm-spoke2"
   location            = azurerm_resource_group.main.location
@@ -86,7 +91,7 @@ resource "azurerm_linux_virtual_machine" "spoke2_vm" {
 
   admin_ssh_key {
     username   = "admin-lab"
-    public_key = data.azurerm_ssh_public_key.linux_key.public_key
+    public_key = tls_private_key.ssh.public_key_openssh
   }
 
   os_disk {
@@ -101,7 +106,6 @@ resource "azurerm_linux_virtual_machine" "spoke2_vm" {
     version   = "latest"
   }
 
-  # Gatus monitors spoke1 from spoke2
   custom_data = base64encode(templatefile("${path.module}/cloud-init/gatus.yaml.tpl", {
     target_ip   = azurerm_network_interface.spoke1_vm_nic.private_ip_address
     target_name = "spoke1"
