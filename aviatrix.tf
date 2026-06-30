@@ -7,6 +7,7 @@ data "azurerm_virtual_network" "hub" {
 # Deploy Aviatrix Spoke Gateway using mc-spoke module
 module "mc_spoke_hub" {
   source  = "terraform-aviatrix-modules/mc-spoke/aviatrix"
+  version = "~>9.0"
 
   cloud                = "Azure"
   name                 = "avx-spoke-hub-frc"

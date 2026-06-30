@@ -1,15 +1,16 @@
 variable "aviatrix_controller_ip" {
-  description = "Aviatrix Controller IP address"
+  description = "Aviatrix Controller FQDN or IP (e.g. controller.example.com)"
   type        = string
 }
 
 variable "aviatrix_username" {
-  description = "Aviatrix Controller username"
+  description = "Aviatrix Controller admin username"
   type        = string
+  default     = "admin"
 }
 
 variable "aviatrix_password" {
-  description = "Aviatrix Controller password"
+  description = "Aviatrix Controller admin password"
   type        = string
   sensitive   = true
 }

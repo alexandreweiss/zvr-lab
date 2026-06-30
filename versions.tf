@@ -5,7 +5,8 @@ terraform {
       version = "~>3.0"
     }
     aviatrix = {
-      source = "AviatrixSystems/aviatrix"
+      source  = "AviatrixSystems/aviatrix"
+      version = "~>9.0"
     }
     tls = {
       source  = "hashicorp/tls"

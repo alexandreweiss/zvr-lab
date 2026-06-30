@@ -82,9 +82,9 @@ Symmetric routing is guaranteed by the ILB 5-tuple hash — both directions of a
 
 ### 2. Aviatrix Controller
 
-- Controller FQDN/IP reachable from where Terraform runs
+- Controller **9.0** — FQDN or IP reachable from where Terraform runs
 - Azure account already onboarded in the controller
-- Admin credentials available
+- Admin username and password available
 
 ### 3. Terraform
 

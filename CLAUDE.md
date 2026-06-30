@@ -33,7 +33,7 @@ No Aviatrix transit gateway. East-west spoke traffic is steered via UDRs → ILB
 - `azurerm ~>3.0`
 - `tls ~>4.0` — generates RSA-4096 SSH key pair; private key written to `ssh_key.pem` (gitignored)
 - `local ~>2.0` — writes `ssh_key.pem` with `0600` permissions
-- `aviatrix` — no version pin. Controller is 8.2, use mc-spoke ≤8.2.x
+- `aviatrix ~>9.0` — targets controller 9.0. mc-spoke module must be ≥9.0.0 (`requires aviatrix >=9.0.0`)
 - Backend: **local** — `terraform.tfstate` in working directory
 
 ## Azure dependencies (must exist before apply)
