@@ -34,12 +34,11 @@ runcmd:
         conditions:
           - "[CONNECTED] == true"
 
-      - name: "Egress — public IP"
-        url: "https://api.ipify.org"
+      - name: "Egress — aviatrix.ai"
+        url: "https://aviatrix.ai"
         interval: 30s
         conditions:
           - "[STATUS] == 200"
-          - "[BODY] != \"\""
     EOF
   - >
     docker run -d

@@ -5,10 +5,10 @@ locals {
 }
 
 resource "aviatrix_web_group" "ipify" {
-  name = "wg-ipify"
+  name = "wg-aviatrix-ai"
   selector {
     match_expressions {
-      snifilter = "api.ipify.org"
+      snifilter = "aviatrix.ai"
     }
   }
 }
