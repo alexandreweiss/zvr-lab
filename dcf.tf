@@ -124,7 +124,13 @@ resource "aviatrix_distributed_firewalling_policy_list" "demo" {
       src_smart_groups = [aviatrix_smart_group.spoke1_vms.uuid, aviatrix_smart_group.spoke2_vms.uuid]
       dst_smart_groups = ["def000ad-0000-0000-0000-000000000001"]
       web_groups       = [aviatrix_web_group.ipify.uuid]
-      protocol         = "Any"
+      protocol         = "TCP"
+      port_ranges {
+        lo = 80
+      }
+      port_ranges {
+        lo = 443
+      }
       logging          = true
     }
   }
