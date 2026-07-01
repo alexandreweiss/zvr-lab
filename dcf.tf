@@ -64,25 +64,15 @@ resource "aviatrix_distributed_firewalling_policy_list" "demo" {
   dynamic "policies" {
     for_each = local.add_icmp_deny ? [1] : []
     content {
-      name             = "deny-icmp-spoke1-to-spoke2"
+      name             = "deny-tcp8080-spoke1-to-spoke2"
       action           = "DENY"
       priority         = 10
       src_smart_groups = [aviatrix_smart_group.spoke1_vms.uuid]
       dst_smart_groups = [aviatrix_smart_group.spoke2_vms.uuid]
-      protocol         = "ICMP"
-      logging          = true
-    }
-  }
-
-  dynamic "policies" {
-    for_each = local.add_icmp_deny ? [1] : []
-    content {
-      name             = "deny-icmp-spoke2-to-spoke1"
-      action           = "DENY"
-      priority         = 11
-      src_smart_groups = [aviatrix_smart_group.spoke2_vms.uuid]
-      dst_smart_groups = [aviatrix_smart_group.spoke1_vms.uuid]
-      protocol         = "ICMP"
+      protocol         = "TCP"
+      port_ranges {
+        lo = 8080
+      }
       logging          = true
     }
   }
@@ -118,9 +108,8 @@ resource "aviatrix_distributed_firewalling_policy_list" "demo" {
   dynamic "policies" {
     for_each = local.add_ipify_block ? [1] : []
     content {
-      name             = "watch-aviatrix-ai-spokes"
-      action           = "PERMIT"
-      watch            = true
+      name             = "deny-aviatrix-ai-spokes"
+      action           = "DENY"
       priority         = 20
       src_smart_groups = [aviatrix_smart_group.spoke1_vms.uuid, aviatrix_smart_group.spoke2_vms.uuid]
       dst_smart_groups = ["def000ad-0000-0000-0000-000000000001"]

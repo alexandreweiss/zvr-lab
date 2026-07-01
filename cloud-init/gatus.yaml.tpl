@@ -16,11 +16,11 @@ runcmd:
       port: 8080
 
     endpoints:
-      - name: "${target_name} ICMP"
-        url: "icmp://${target_ip}"
+      - name: "${target_name} HTTP (8080)"
+        url: "http://${target_ip}:8080"
         interval: 5s
         conditions:
-          - "[CONNECTED] == true"
+          - "[STATUS] == 200"
 
       - name: "${target_name} SSH (TCP 22)"
         url: "tcp://${target_ip}:22"
