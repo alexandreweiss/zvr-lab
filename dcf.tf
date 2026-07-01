@@ -118,8 +118,9 @@ resource "aviatrix_distributed_firewalling_policy_list" "demo" {
   dynamic "policies" {
     for_each = local.add_ipify_block ? [1] : []
     content {
-      name             = "deny-ipify-spokes"
-      action           = "DENY"
+      name             = "watch-aviatrix-ai-spokes"
+      action           = "PERMIT"
+      watch            = true
       priority         = 20
       src_smart_groups = [aviatrix_smart_group.spoke1_vms.uuid, aviatrix_smart_group.spoke2_vms.uuid]
       dst_smart_groups = ["def000ad-0000-0000-0000-000000000001"]
