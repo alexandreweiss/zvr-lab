@@ -20,6 +20,12 @@ variable "aviatrix_azure_account_name" {
   type        = string
 }
 
+variable "block_ipify" {
+  description = "Block api.ipify.org from all spokes via FQDN webgroup"
+  type        = bool
+  default     = false
+}
+
 variable "dcf_scenario" {
   description = "DCF enforcement scenario: 'allow_all' (baseline), 'deny_icmp' (block ping only), 'deny_all' (full block)"
   type        = string

@@ -1,6 +1,16 @@
 locals {
-  add_icmp_deny = contains(["deny_icmp"], var.dcf_scenario)
-  add_all_deny  = var.dcf_scenario == "deny_all"
+  add_icmp_deny    = contains(["deny_icmp"], var.dcf_scenario)
+  add_all_deny     = var.dcf_scenario == "deny_all"
+  add_ipify_block  = var.block_ipify
+}
+
+resource "aviatrix_web_group" "ipify" {
+  name = "wg-ipify"
+  selector {
+    match_expressions {
+      snifilter = "api.ipify.org"
+    }
+  }
 }
 
 # Disable DCF policy pruning on the spoke gateway via API.
@@ -99,6 +109,21 @@ resource "aviatrix_distributed_firewalling_policy_list" "demo" {
       priority         = 11
       src_smart_groups = [aviatrix_smart_group.spoke2_vms.uuid]
       dst_smart_groups = [aviatrix_smart_group.spoke1_vms.uuid]
+      protocol         = "Any"
+      logging          = true
+    }
+  }
+
+  # Scenario: block_ipify — deny api.ipify.org by FQDN from all spokes
+  dynamic "policies" {
+    for_each = local.add_ipify_block ? [1] : []
+    content {
+      name             = "deny-ipify-spokes"
+      action           = "DENY"
+      priority         = 20
+      src_smart_groups = [aviatrix_smart_group.spoke1_vms.uuid, aviatrix_smart_group.spoke2_vms.uuid]
+      dst_smart_groups = ["def000ad-0000-0000-0000-000000000001"]
+      web_groups       = [aviatrix_web_group.ipify.uuid]
       protocol         = "Any"
       logging          = true
     }
