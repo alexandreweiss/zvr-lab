@@ -254,12 +254,21 @@ CoPilot → **Security → Distributed Cloud Firewall** → Policy Logs — show
 
 **DCF policy pruning** — If source and destination Smart Groups both resolve to the same gateway (both spokes share one GW in this topology), Aviatrix prunes the policy as a no-op. Policies appear in the controller but are silently dropped before being pushed to the gateway.
 
-To disable pruning, set this env var on the controller before applying DCF rules:
+Disable pruning per gateway via API (run once after deploy):
 
+```bash
+# 1. Get CID
+CID=$(curl -sk -X POST "https://4.233.114.95/v1/api" \
+  -d "action=login&username=admin&password=<password>" \
+  | python3 -c "import sys,json; print(json.load(sys.stdin)['CID'])")
+
+# 2. Disable pruning on the spoke gateway
+curl -k -X PUT "https://4.233.114.95/v2.5/api/microseg/gateway/avx-spoke-hub-frc" \
+  -H "Authorization: cid $CID" \
+  -H "Content-Type: application/json"
 ```
-Container: avx-ctrl-state-sync
-Env var:   AVX_CTRL_MICROSEG_DISABLE_POLICY_PRUNING=true
-```
+
+Replace `avx-spoke-hub-frc` with the gateway name if it changes.
 
 **Symmetric routing** — Azure ILB uses a 5-tuple hash (src IP, dst IP, src port, dst port, protocol), so both directions of a flow always land on the same Aviatrix gateway. SNAT is not needed for spoke-to-spoke symmetry in this topology.
 

@@ -45,6 +45,15 @@ No Aviatrix transit gateway. East-west spoke traffic is steered via UDRs → ILB
 
 DCF must be enabled manually on the controller before applying `dcf.tf` — this is a shared controller (9.0), Terraform must NOT touch global feature flags. `aviatrix_config_feature` and `aviatrix_distributed_firewalling_config` are both excluded intentionally.
 
+Policy pruning is disabled per gateway via API (not Terraform):
+```bash
+CID=$(curl -sk -X POST "https://<controller>/v1/api" \
+  -d "action=login&username=admin&password=<pwd>" \
+  | python3 -c "import sys,json; print(json.load(sys.stdin)['CID'])")
+curl -k -X PUT "https://<controller>/v2.5/api/microseg/gateway/avx-spoke-hub-frc" \
+  -H "Authorization: cid $CID" -H "Content-Type: application/json"
+```
+
 ## Common issues
 
 **NIC data source fails** — `avx_gw_nic` name is `av-nic-<gw_name>`. If gateway name changes, this auto-updates. Data source has `depends_on = [module.mc_spoke_hub]`.
