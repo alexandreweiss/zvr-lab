@@ -84,6 +84,29 @@ resource "aviatrix_distributed_firewalling_policy_list" "demo" {
     }
   }
 
+  # Watch: egress to Public Internet and AllWeb webgroup — logging only, no block
+  policies {
+    name             = "watch-spoke1-to-internet"
+    action           = "PERMIT"
+    priority         = 50
+    src_smart_groups = [aviatrix_smart_group.spoke1_vms.uuid]
+    dst_smart_groups = ["def000ad-0000-0000-0000-000000000001"]
+    web_groups       = ["def000ad-0000-0000-0000-000000000002"]
+    protocol         = "Any"
+    logging          = true
+  }
+
+  policies {
+    name             = "watch-spoke2-to-internet"
+    action           = "PERMIT"
+    priority         = 51
+    src_smart_groups = [aviatrix_smart_group.spoke2_vms.uuid]
+    dst_smart_groups = ["def000ad-0000-0000-0000-000000000001"]
+    web_groups       = ["def000ad-0000-0000-0000-000000000002"]
+    protocol         = "Any"
+    logging          = true
+  }
+
   # Baseline: always-on permit for spoke1 ↔ spoke2
   policies {
     name             = "allow-spoke1-to-spoke2"
