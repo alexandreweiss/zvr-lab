@@ -265,7 +265,8 @@ CID=$(curl -sk -X POST "https://4.233.114.95/v1/api" \
 # 2. Disable pruning on the spoke gateway
 curl -k -X PUT "https://4.233.114.95/v2.5/api/microseg/gateway/avx-spoke-hub-frc" \
   -H "Authorization: cid $CID" \
-  -H "Content-Type: application/json"
+  -H "Content-Type: application/json" \
+  -d '{"dcf_disable_pruning": true}'
 ```
 
 Replace `avx-spoke-hub-frc` with the gateway name if it changes.

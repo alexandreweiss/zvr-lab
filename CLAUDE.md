@@ -51,7 +51,8 @@ CID=$(curl -sk -X POST "https://<controller>/v1/api" \
   -d "action=login&username=admin&password=<pwd>" \
   | python3 -c "import sys,json; print(json.load(sys.stdin)['CID'])")
 curl -k -X PUT "https://<controller>/v2.5/api/microseg/gateway/avx-spoke-hub-frc" \
-  -H "Authorization: cid $CID" -H "Content-Type: application/json"
+  -H "Authorization: cid $CID" -H "Content-Type: application/json" \
+  -d '{"dcf_disable_pruning": true}'
 ```
 
 ## Common issues
