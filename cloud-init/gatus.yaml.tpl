@@ -39,7 +39,7 @@ runcmd:
         interval: 30s
         conditions:
           - "[STATUS] == 200"
-          - "[BODY] != \"\""
+          - "[BODY].ip != \"\""
     EOF
   - >
     docker run -d
