@@ -3,6 +3,26 @@ locals {
   add_all_deny  = var.dcf_scenario == "deny_all"
 }
 
+# Disable DCF policy pruning on the spoke gateway via API.
+# Pruning silently drops policies when src/dst resolve to the same GW.
+resource "terraform_data" "dcf_disable_pruning" {
+  depends_on = [module.mc_spoke_hub]
+
+  triggers_replace = [module.mc_spoke_hub.spoke_gateway.gw_name]
+
+  provisioner "local-exec" {
+    command = <<-EOT
+      CID=$(curl -sk -X POST "https://${var.aviatrix_controller_ip}/v1/api" \
+        -d "action=login&username=${var.aviatrix_username}&password=${var.aviatrix_password}" \
+        | python3 -c "import sys,json; print(json.load(sys.stdin)['CID'])")
+      curl -sk -X PUT "https://${var.aviatrix_controller_ip}/v2.5/api/microseg/gateway/${module.mc_spoke_hub.spoke_gateway.gw_name}" \
+        -H "Authorization: cid $CID" \
+        -H "Content-Type: application/json" \
+        -d '{"dcf_disable_pruning": true}'
+    EOT
+  }
+}
+
 # Tag-based Smart Groups — matches VMs by Azure tag set in vms.tf
 resource "aviatrix_smart_group" "spoke1_vms" {
   name = "sg-spoke1-vms"
