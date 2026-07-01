@@ -1,3 +1,8 @@
+resource "random_integer" "vm_suffix" {
+  min = 100
+  max = 999
+}
+
 # Generate SSH key pair for this deployment
 resource "tls_private_key" "ssh" {
   algorithm = "RSA"
@@ -24,7 +29,7 @@ resource "azurerm_network_interface" "spoke1_vm_nic" {
 }
 
 resource "azurerm_linux_virtual_machine" "spoke1_vm" {
-  name                = "vm-spoke1-linux"
+  name                = "vm-spoke1-linux-${random_integer.vm_suffix.result}"
   location            = azurerm_resource_group.main.location
   resource_group_name = azurerm_resource_group.main.name
   size                = "Standard_B2s"
@@ -77,7 +82,7 @@ resource "azurerm_network_interface" "spoke2_vm_nic" {
 }
 
 resource "azurerm_linux_virtual_machine" "spoke2_vm" {
-  name                = "vm-spoke2-linux"
+  name                = "vm-spoke2-linux-${random_integer.vm_suffix.result}"
   location            = azurerm_resource_group.main.location
   resource_group_name = azurerm_resource_group.main.name
   size                = "Standard_B2s"
