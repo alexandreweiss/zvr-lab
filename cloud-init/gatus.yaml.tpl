@@ -33,6 +33,13 @@ runcmd:
         interval: 5s
         conditions:
           - "[CONNECTED] == true"
+
+      - name: "Egress — api.ipify.org (public IP)"
+        url: "https://api.ipify.org?format=json"
+        interval: 30s
+        conditions:
+          - "[STATUS] == 200"
+          - "[BODY] != \"\""
     EOF
   - >
     docker run -d
